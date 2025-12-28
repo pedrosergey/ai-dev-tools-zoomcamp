@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 220 20% 6%;
+    --foreground: 0 0% 95%;
+
+    --card: 220 20% 10%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 220 20% 10%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 142 76% 50%;
+    --primary-foreground: 220 20% 6%;
+
+    --secondary: 220 20% 15%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 10% 60%;
+
+    --accent: 280 100% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 15%;
+    --ring: 142 76% 50%;
+
+    --radius: 0.75rem;
+
+    /* Custom game colors */
+    --snake: 142 76% 50%;
+    --snake-glow: 142 76% 50%;
+    --food: 0 84% 60%;
+    --food-glow: 0 84% 60%;
+    --grid: 220 20% 12%;
+    --neon-blue: 200 100% 60%;
+    --neon-purple: 280 100% 65%;
+    --neon-yellow: 50 100% 60%;
+
+    /* Gradients */
+    --gradient-neon: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-card: linear-gradient(180deg, hsl(220 20% 12%), hsl(220 20% 8%));
+
+    /* Shadows */
+    --shadow-neon: 0 0 20px hsl(var(--primary) / 0.5);
+    --shadow-neon-strong: 0 0 40px hsl(var(--primary) / 0.7), 0 0 60px hsl(var(--primary) / 0.3);
+
+    --sidebar-background: 220 20% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 142 76% 50%;
+    --sidebar-primary-foreground: 220 20% 6%;
+    --sidebar-accent: 220 20% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 142 76% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-pixel {
+    font-family: 'Press Start 2P', cursive;
+  }
+}
+
+@layer components {
+  .neon-text {
+    text-shadow: 0 0 10px hsl(var(--primary) / 0.8),
+                 0 0 20px hsl(var(--primary) / 0.6),
+                 0 0 30px hsl(var(--primary) / 0.4);
+  }
+
+  .neon-text-accent {
+    text-shadow: 0 0 10px hsl(var(--accent) / 0.8),
+                 0 0 20px hsl(var(--accent) / 0.6),
+                 0 0 30px hsl(var(--accent) / 0.4);
+  }
+
+  .neon-border {
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.5),
+                inset 0 0 10px hsl(var(--primary) / 0.1);
+  }
+
+  .neon-box {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3),
+                0 0 40px hsl(var(--primary) / 0.1);
+  }
+
+  .game-grid {
+    background-image: 
+      linear-gradient(hsl(var(--grid)) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--grid)) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+@layer utilities {
+  .animate-pulse-neon {
+    animation: pulse-neon 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-neon {
+    0%, 100% {
+      opacity: 1;
+      filter: brightness(1);
+    }
+    50% {
+      opacity: 0.8;
+      filter: brightness(1.2);
+    }
+  }
+
+  .animate-glow {
+    animation: glow 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 10px hsl(var(--primary) / 0.5),
+                  0 0 20px hsl(var(--primary) / 0.3);
+    }
+    to {
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.7),
+                  0 0 40px hsl(var(--primary) / 0.5);
+    }
+  }
+}
