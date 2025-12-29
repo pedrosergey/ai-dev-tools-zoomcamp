@@ -1,62 +1,158 @@
-from typing import Dict, List, Optional
-from .models import User, LeaderboardEntry, GameSession, GameMode
+from typing import Optional, List
 from datetime import date
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
+import uuid
+from .models import (
+    UserModel, LeaderboardEntryModel, GameSessionModel, GameMode
+)
 
-class MockDB:
-    def __init__(self):
-        self.users: Dict[str, dict] = {} # email -> {user: User, password: str}
-        self.leaderboard: List[LeaderboardEntry] = []
-        self.sessions: List[GameSession] = []
-        self._init_data()
 
-    def _init_data(self):
-        # Mock users
-        self.add_user("player1@snake.io", "SnakeMaster", "password123")
-        self.add_user("player2@snake.io", "VenomStrike", "password123")
-        
-        # Mock leaderboard
-        self.leaderboard.extend([
-            LeaderboardEntry(id="1", username="SnakeMaster", score=2450, mode=GameMode.WALLS, date=date(2024, 1, 15)),
-            LeaderboardEntry(id="2", username="VenomStrike", score=2100, mode=GameMode.PASS_THROUGH, date=date(2024, 1, 14)),
-            LeaderboardEntry(id="3", username="CobraKing", score=1890, mode=GameMode.WALLS, date=date(2024, 1, 13)),
-        ])
-
-        # Mock sessions
-        self.sessions.extend([
-            GameSession(id="1", username="LivePlayer1", score=340, mode=GameMode.WALLS, isLive=True),
-            GameSession(id="2", username="StreamerPro", score=520, mode=GameMode.PASS_THROUGH, isLive=True),
-        ])
-
-    def add_user(self, email, username, password) -> User:
-        user_id = str(len(self.users) + 1)
-        user = User(id=user_id, username=username, email=email)
-        self.users[email] = {"user": user, "password": password}
-        return user
-
-    def get_user_by_email(self, email) -> Optional[dict]:
-        return self.users.get(email)
+class DatabaseService:
+    """Service layer for database operations."""
     
-    def get_user_by_username(self, username) -> Optional[dict]:
-        for data in self.users.values():
-            if data["user"].username == username:
-                return data
-        return None
-
-    def add_score(self, username: str, score: int, mode: GameMode) -> int:
-        entry = LeaderboardEntry(
-            id=str(len(self.leaderboard) + 1),
+    def __init__(self, db: Session):
+        self.db = db
+    
+    # User operations
+    def add_user(self, email: str, username: str, password_hash: str) -> UserModel:
+        """Add a new user to the database."""
+        user_id = str(uuid.uuid4())
+        user = UserModel(
+            id=user_id,
+            username=username,
+            email=email,
+            password_hash=password_hash
+        )
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+    
+    def get_user_by_email(self, email: str) -> Optional[UserModel]:
+        """Retrieve user by email."""
+        return self.db.query(UserModel).filter(UserModel.email == email).first()
+    
+    def get_user_by_username(self, username: str) -> Optional[UserModel]:
+        """Retrieve user by username."""
+        return self.db.query(UserModel).filter(UserModel.username == username).first()
+    
+    def get_user_by_id(self, user_id: str) -> Optional[UserModel]:
+        """Retrieve user by ID."""
+        return self.db.query(UserModel).filter(UserModel.id == user_id).first()
+    
+    # Leaderboard operations
+    def add_score(
+        self, username: str, score: int, mode: GameMode
+    ) -> tuple[LeaderboardEntryModel, int]:
+        """
+        Add a score to the leaderboard and return the entry with its rank.
+        Returns: (LeaderboardEntryModel, rank)
+        """
+        entry_id = str(uuid.uuid4())
+        entry = LeaderboardEntryModel(
+            id=entry_id,
             username=username,
             score=score,
             mode=mode,
             date=date.today()
         )
-        self.leaderboard.append(entry)
-        self.leaderboard.sort(key=lambda x: x.score, reverse=True)
-        return self.leaderboard.index(entry) + 1
-
-    def get_leaderboard(self, mode: Optional[GameMode] = None) -> List[LeaderboardEntry]:
+        self.db.add(entry)
+        self.db.commit()
+        self.db.refresh(entry)
+        
+        # Calculate rank
+        rank = self.db.query(func.count(LeaderboardEntryModel.id)).filter(
+            LeaderboardEntryModel.score > score,
+            LeaderboardEntryModel.mode == mode
+        ).scalar() + 1
+        
+        return entry, rank
+    
+    def get_leaderboard(
+        self, mode: Optional[GameMode] = None, limit: int = 100
+    ) -> List[LeaderboardEntryModel]:
+        """Get leaderboard entries, optionally filtered by game mode."""
+        query = self.db.query(LeaderboardEntryModel).order_by(
+            LeaderboardEntryModel.score.desc()
+        )
         if mode:
-            return [e for e in self.leaderboard if e.mode == mode]
-        return self.leaderboard
-
-db = MockDB()
+            query = query.filter(LeaderboardEntryModel.mode == mode)
+        return query.limit(limit).all()
+    
+    def get_user_leaderboard_position(
+        self, username: str, mode: Optional[GameMode] = None
+    ) -> Optional[int]:
+        """Get user's rank in leaderboard."""
+        query = self.db.query(LeaderboardEntryModel).filter(
+            LeaderboardEntryModel.username == username
+        )
+        if mode:
+            query = query.filter(LeaderboardEntryModel.mode == mode)
+        
+        entry = query.order_by(LeaderboardEntryModel.score.desc()).first()
+        if not entry:
+            return None
+        
+        rank = self.db.query(func.count(LeaderboardEntryModel.id)).filter(
+            LeaderboardEntryModel.score > entry.score
+        ).scalar() + 1
+        
+        return rank
+    
+    # Game session operations
+    def create_session(
+        self, username: str, score: int, mode: GameMode, is_live: bool = False
+    ) -> GameSessionModel:
+        """Create a new game session."""
+        session_id = str(uuid.uuid4())
+        session = GameSessionModel(
+            id=session_id,
+            username=username,
+            score=score,
+            mode=mode,
+            is_live=is_live
+        )
+        self.db.add(session)
+        self.db.commit()
+        self.db.refresh(session)
+        return session
+    
+    def get_live_sessions(self) -> List[GameSessionModel]:
+        """Get all live game sessions."""
+        return self.db.query(GameSessionModel).filter(
+            GameSessionModel.is_live == True
+        ).all()
+    
+    def get_session_by_id(self, session_id: str) -> Optional[GameSessionModel]:
+        """Retrieve a game session by ID."""
+        return self.db.query(GameSessionModel).filter(
+            GameSessionModel.id == session_id
+        ).first()
+    
+    def update_session(
+        self, session_id: str, score: int, is_live: bool
+    ) -> Optional[GameSessionModel]:
+        """Update a game session."""
+        session = self.get_session_by_id(session_id)
+        if session:
+            session.score = score
+            session.is_live = is_live
+            self.db.commit()
+            self.db.refresh(session)
+        return session
+    
+    def close_session(self, session_id: str) -> Optional[GameSessionModel]:
+        """Close a game session."""
+        session = self.get_session_by_id(session_id)
+        if session:
+            session.is_live = False
+            self.db.commit()
+            self.db.refresh(session)
+        return session
+    
+    def get_sessions_by_username(self, username: str) -> List[GameSessionModel]:
+        """Get all sessions for a user."""
+        return self.db.query(GameSessionModel).filter(
+            GameSessionModel.username == username
+        ).all()

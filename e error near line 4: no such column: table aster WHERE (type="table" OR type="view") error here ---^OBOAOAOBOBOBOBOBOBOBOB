@@ -1,0 +1,35 @@
+[33mcommit 39443b9aa2b905c1d57deaac332a29ef1a96559f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Pedro Sergey <pedrosergey.datascientist@gmail.com>
+Date:   Sun Dec 28 19:05:44 2025 +0000
+
+    finalyzing backend
+
+[33mcommit cce5a6cdd7f77969f995cd8bc8c24a2232000072[m
+Author: pedrosergey <pedrosergey.datascientist@gmail.com>
+Date:   Sun Dec 28 18:21:34 2025 +0000
+
+    finishing working with Antigravity
+
+[33mcommit e70760937dafcb0f38127e5f1c6798032df17a93[m
+Author: PedroSergey <pedrosergey.datascientist@gmail.com>
+Date:   Sun Dec 28 08:53:01 2025 +0000
+
+    updating second module
+
+[33mcommit ec11ce2d9cf56eccd0ca05abf4de592b4b4f6ff5[m
+Author: pedrosergey <pedrosergey.datascientist@gmail.com>
+Date:   Sat Dec 27 21:27:26 2025 +0000
+
+    Fix: Turn nested repo into regular folder
+
+[33mcommit 9efd5557f9308c688b94d189e5083bf7b496e3bd[m
+Author: PedroSergey <pedrosergey.datascientist@gmail.com>
+Date:   Sat Dec 27 20:15:33 2025 +0000
+
+    adding second module
+
+[33mcommit ba00757ebab2b4911f77591b3b6f08f134e3585f[m
+Author: pedrosergey <pedrosergey.datascientist@gmail.com>
+Date:   Fri Dec 26 12:45:07 2025 +0000
+
+    adding the final project

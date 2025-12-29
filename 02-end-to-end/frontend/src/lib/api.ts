@@ -1,149 +1,92 @@
-// Centralized mock API layer
-// All backend calls go through here for easy migration to real backend
+import { User, LeaderboardEntry, GameSession, AuthResponse, GameMode } from '@/types/game';
 
-import { User, LeaderboardEntry, GameSession, AuthResponse } from '@/types/game';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000';
 
-// Simulated delay for realistic async behavior
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+async function handleJSON<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text);
+      throw new Error(json.detail || json.error || JSON.stringify(json));
+    } catch {
+      throw new Error(text || res.statusText);
+    }
+  }
+  return res.json();
+}
 
-// Mock data storage (in-memory)
-let currentUser: User | null = null;
-const users: Map<string, { user: User; password: string }> = new Map();
-
-// Initialize with some mock users
-users.set('player1@snake.io', { 
-  user: { id: '1', username: 'SnakeMaster', email: 'player1@snake.io' }, 
-  password: 'password123' 
-});
-users.set('player2@snake.io', { 
-  user: { id: '2', username: 'VenomStrike', email: 'player2@snake.io' }, 
-  password: 'password123' 
-});
-
-// Mock leaderboard data
-const mockLeaderboard: LeaderboardEntry[] = [
-  { id: '1', username: 'SnakeMaster', score: 2450, mode: 'walls', date: '2024-01-15' },
-  { id: '2', username: 'VenomStrike', score: 2100, mode: 'pass-through', date: '2024-01-14' },
-  { id: '3', username: 'CobraKing', score: 1890, mode: 'walls', date: '2024-01-13' },
-  { id: '4', username: 'PythonPro', score: 1750, mode: 'pass-through', date: '2024-01-12' },
-  { id: '5', username: 'ViperQueen', score: 1620, mode: 'walls', date: '2024-01-11' },
-  { id: '6', username: 'SerpentLord', score: 1500, mode: 'pass-through', date: '2024-01-10' },
-  { id: '7', username: 'SlitherKing', score: 1380, mode: 'walls', date: '2024-01-09' },
-  { id: '8', username: 'NightCrawler', score: 1250, mode: 'pass-through', date: '2024-01-08' },
-  { id: '9', username: 'ToxicBite', score: 1100, mode: 'walls', date: '2024-01-07' },
-  { id: '10', username: 'ScaleRunner', score: 980, mode: 'pass-through', date: '2024-01-06' },
-];
-
-// Mock active game sessions for spectating
-const mockActiveSessions: GameSession[] = [
-  { id: '1', username: 'LivePlayer1', score: 340, mode: 'walls', isLive: true },
-  { id: '2', username: 'StreamerPro', score: 520, mode: 'pass-through', isLive: true },
-  { id: '3', username: 'NightGamer', score: 180, mode: 'walls', isLive: true },
-];
-
-// Auth API
 export const authApi = {
   async login(email: string, password: string): Promise<AuthResponse> {
-    await delay(500);
-    
-    const userData = users.get(email);
-    if (!userData || userData.password !== password) {
-      return { success: false, error: 'Invalid email or password' };
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const result = await handleJSON<AuthResponse>(res);
+    if (result.success && result.user) {
+      localStorage.setItem('snake_user', JSON.stringify(result.user));
     }
-    
-    currentUser = userData.user;
-    localStorage.setItem('snake_user', JSON.stringify(currentUser));
-    return { success: true, user: currentUser };
+    return result;
   },
 
   async signup(email: string, username: string, password: string): Promise<AuthResponse> {
-    await delay(500);
-    
-    if (users.has(email)) {
-      return { success: false, error: 'Email already exists' };
+    const res = await fetch(`${API_BASE}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, username, password }),
+    });
+    const result = await handleJSON<AuthResponse>(res);
+    if (result.success && result.user) {
+      localStorage.setItem('snake_user', JSON.stringify(result.user));
     }
-    
-    const existingUsernames = Array.from(users.values()).map(u => u.user.username);
-    if (existingUsernames.includes(username)) {
-      return { success: false, error: 'Username already taken' };
-    }
-    
-    const newUser: User = {
-      id: String(users.size + 1),
-      username,
-      email,
-    };
-    
-    users.set(email, { user: newUser, password });
-    currentUser = newUser;
-    localStorage.setItem('snake_user', JSON.stringify(currentUser));
-    return { success: true, user: currentUser };
+    return result;
   },
 
   async logout(): Promise<void> {
-    await delay(200);
-    currentUser = null;
+    await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
     localStorage.removeItem('snake_user');
   },
 
   async getCurrentUser(): Promise<User | null> {
-    await delay(100);
-    
-    if (currentUser) return currentUser;
-    
-    const stored = localStorage.getItem('snake_user');
-    if (stored) {
-      currentUser = JSON.parse(stored);
-      return currentUser;
-    }
-    
-    return null;
+    const res = await fetch(`${API_BASE}/auth/me`);
+    if (res.status === 401) return null;
+    return handleJSON<User>(res);
   },
 };
 
-// Leaderboard API
 export const leaderboardApi = {
-  async getLeaderboard(mode?: 'walls' | 'pass-through'): Promise<LeaderboardEntry[]> {
-    await delay(300);
-    
-    if (mode) {
-      return mockLeaderboard.filter(entry => entry.mode === mode);
-    }
-    return mockLeaderboard;
+  async getLeaderboard(mode?: GameMode): Promise<LeaderboardEntry[]> {
+    const url = new URL(`${API_BASE}/leaderboard`);
+    if (mode) url.searchParams.set('mode', mode);
+    const res = await fetch(url.toString());
+    return handleJSON<LeaderboardEntry[]>(res);
   },
 
-  async submitScore(score: number, mode: 'walls' | 'pass-through'): Promise<{ success: boolean; rank?: number }> {
-    await delay(400);
-    
-    if (!currentUser) {
-      return { success: false };
-    }
-    
-    const newEntry: LeaderboardEntry = {
-      id: String(mockLeaderboard.length + 1),
-      username: currentUser.username,
-      score,
-      mode,
-      date: new Date().toISOString().split('T')[0],
-    };
-    
-    mockLeaderboard.push(newEntry);
-    mockLeaderboard.sort((a, b) => b.score - a.score);
-    
-    const rank = mockLeaderboard.findIndex(e => e.id === newEntry.id) + 1;
-    return { success: true, rank };
+  async submitScore(score: number, mode: GameMode, username?: string): Promise<{ success: boolean; rank?: number }> {
+    // Get username from localStorage if not provided
+    const user = username || (() => {
+      const stored = localStorage.getItem('snake_user');
+      return stored ? JSON.parse(stored).username : 'Unknown';
+    })();
+
+    const res = await fetch(`${API_BASE}/leaderboard`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score, mode, username: user }),
+    });
+    return handleJSON<{ success: boolean; rank?: number }>(res);
   },
 };
 
-// Game sessions API (for spectating)
 export const gameSessionsApi = {
   async getActiveSessions(): Promise<GameSession[]> {
-    await delay(300);
-    return mockActiveSessions;
+    const res = await fetch(`${API_BASE}/sessions`);
+    return handleJSON<GameSession[]>(res);
   },
 
   async getSessionById(id: string): Promise<GameSession | null> {
-    await delay(200);
-    return mockActiveSessions.find(s => s.id === id) || null;
+    const res = await fetch(`${API_BASE}/sessions/${encodeURIComponent(id)}`);
+    if (res.status === 404) return null;
+    return handleJSON<GameSession>(res);
   },
 };

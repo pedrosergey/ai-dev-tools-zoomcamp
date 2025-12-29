@@ -21,6 +21,20 @@ The frontend for the **Snake Arena** application, designed to be fast, responsiv
     npm run dev
     ```
 
+### Connecting to the Backend
+
+By default the frontend expects the backend API at `http://localhost:8000`.
+To point the frontend to a different backend URL, set the `VITE_API_BASE_URL` environment variable before starting the dev server:
+
+```bash
+# macOS / Linux
+export VITE_API_BASE_URL=http://localhost:8000
+npm run dev
+
+# Windows (PowerShell)
+$env:VITE_API_BASE_URL = "http://localhost:8000"; npm run dev
+```
+
 3.  **Run tests:**
     ```bash
     npx vitest run
