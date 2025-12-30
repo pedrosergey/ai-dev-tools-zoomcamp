@@ -64,9 +64,11 @@ export const authApi = {
 
 export const leaderboardApi = {
   async getLeaderboard(mode?: GameMode): Promise<LeaderboardEntry[]> {
-    const url = new URL(`${API_URL}/leaderboard`);
-    if (mode) url.searchParams.set('mode', mode);
-    const res = await fetch(url.toString());
+    // Avoid using `new URL()` with a relative base (breaks in production).
+    // Build the URL string directly so it works both in dev (absolute) and prod (relative).
+    let url = `${API_URL}/leaderboard`;
+    if (mode) url += `?mode=${encodeURIComponent(mode)}`;
+    const res = await fetch(url);
     return handleJSON<LeaderboardEntry[]>(res);
   },
 

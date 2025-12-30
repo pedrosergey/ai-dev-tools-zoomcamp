@@ -27,7 +27,8 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     init_db()
-    _init_sample_data()
+    # Sample data disabled - database should start empty
+    # _init_sample_data()
 
 
 def _init_sample_data():

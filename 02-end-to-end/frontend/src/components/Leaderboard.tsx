@@ -11,16 +11,24 @@ interface LeaderboardProps {
 export function Leaderboard({ onClose }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<GameMode | 'all'>('all');
 
   useEffect(() => {
     const loadLeaderboard = async () => {
-      setIsLoading(true);
-      const data = await leaderboardApi.getLeaderboard(
-        filter === 'all' ? undefined : filter
-      );
-      setEntries(data);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await leaderboardApi.getLeaderboard(
+          filter === 'all' ? undefined : filter
+        );
+        setEntries(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
+        setEntries([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadLeaderboard();
   }, [filter]);
@@ -79,8 +87,16 @@ export function Leaderboard({ onClose }: LeaderboardProps) {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      ) : (
-        <div className="bg-card rounded-lg border border-border overflow-hidden neon-box">
+      ) : error ? (
+        <div className="bg-destructive/20 border border-destructive rounded-lg p-4 text-destructive text-center">
+          {error}
+        </div>
+      ) : entries.length === 0 ? (
+        <div className="bg-muted rounded-lg p-8 text-center text-muted-foreground">
+          No scores yet. Play the game to appear on the leaderboard!
+        </div>
+        ) : (
+          <div className="bg-card rounded-lg border border-border overflow-hidden neon-box">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">
