@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: snake_arena_db
+    environment:
+      POSTGRES_USER: snake_user
+      POSTGRES_PASSWORD: snake_password
+      POSTGRES_DB: snake_arena
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U snake_user -d snake_arena"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - snake_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: snake_arena_app
+    environment:
+      DATABASE_URL: postgresql://snake_user:snake_password@postgres:5432/snake_arena
+      ENVIRONMENT: production
+    ports:
+      - "80:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - snake_network
+
+volumes:
+  postgres_data:
+
+networks:
+  snake_network:
+    driver: bridge

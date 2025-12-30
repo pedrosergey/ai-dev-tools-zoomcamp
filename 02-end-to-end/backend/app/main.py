@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from .database import init_db
 from .routers import auth, leaderboard, sessions
 from .db import DatabaseService
@@ -103,6 +105,34 @@ app.include_router(auth.router)
 app.include_router(leaderboard.router)
 app.include_router(sessions.router)
 
+# Serve static files (frontend build) as fallback
+# This should be LAST so API routes take precedence
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    from fastapi.responses import FileResponse
+    
+    @app.get("/{full_path:path}")
+    async def serve_static(full_path: str):
+        """Serve static files from the frontend build."""
+        file_path = static_dir / full_path
+        
+        # If it's a directory or doesn't exist, serve index.html for SPA routing
+        if not file_path.exists() or file_path.is_dir():
+            index_file = static_dir / "index.html"
+            if index_file.exists():
+                return FileResponse(str(index_file))
+            return {"detail": "Not Found"}
+        
+        # Serve the file
+        return FileResponse(str(file_path))
+
+# Also handle root path
 @app.get("/")
-async def root():
+async def root_static():
+    """Serve index.html from the frontend build."""
+    index_file = static_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
     return {"message": "Welcome to Snake Arena API"}
+
+
