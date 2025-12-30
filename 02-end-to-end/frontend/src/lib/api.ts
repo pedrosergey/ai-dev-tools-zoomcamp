@@ -1,6 +1,14 @@
 import { User, LeaderboardEntry, GameSession, AuthResponse, GameMode } from '@/types/game';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000';
+// API_BASE is empty in production (uses relative paths), or localhost:8000 in development
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || (
+  import.meta.env.DEV 
+    ? 'http://localhost:8000' 
+    : ''
+);
+
+// Construct API endpoints with /api prefix
+const API_URL = API_BASE ? `${API_BASE}/api` : '/api';
 
 async function handleJSON<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -17,7 +25,7 @@ async function handleJSON<T>(res: Response): Promise<T> {
 
 export const authApi = {
   async login(email: string, password: string): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -30,7 +38,7 @@ export const authApi = {
   },
 
   async signup(email: string, username: string, password: string): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE}/auth/signup`, {
+    const res = await fetch(`${API_URL}/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, username, password }),
@@ -43,12 +51,12 @@ export const authApi = {
   },
 
   async logout(): Promise<void> {
-    await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+    await fetch(`${API_URL}/auth/logout`, { method: 'POST' });
     localStorage.removeItem('snake_user');
   },
 
   async getCurrentUser(): Promise<User | null> {
-    const res = await fetch(`${API_BASE}/auth/me`);
+    const res = await fetch(`${API_URL}/auth/me`);
     if (res.status === 401) return null;
     return handleJSON<User>(res);
   },
@@ -56,7 +64,7 @@ export const authApi = {
 
 export const leaderboardApi = {
   async getLeaderboard(mode?: GameMode): Promise<LeaderboardEntry[]> {
-    const url = new URL(`${API_BASE}/leaderboard`);
+    const url = new URL(`${API_URL}/leaderboard`);
     if (mode) url.searchParams.set('mode', mode);
     const res = await fetch(url.toString());
     return handleJSON<LeaderboardEntry[]>(res);
@@ -69,7 +77,7 @@ export const leaderboardApi = {
       return stored ? JSON.parse(stored).username : 'Unknown';
     })();
 
-    const res = await fetch(`${API_BASE}/leaderboard`, {
+    const res = await fetch(`${API_URL}/leaderboard`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ score, mode, username: user }),
@@ -80,12 +88,12 @@ export const leaderboardApi = {
 
 export const gameSessionsApi = {
   async getActiveSessions(): Promise<GameSession[]> {
-    const res = await fetch(`${API_BASE}/sessions`);
+    const res = await fetch(`${API_URL}/sessions`);
     return handleJSON<GameSession[]>(res);
   },
 
   async getSessionById(id: string): Promise<GameSession | null> {
-    const res = await fetch(`${API_BASE}/sessions/${encodeURIComponent(id)}`);
+    const res = await fetch(`${API_URL}/sessions/${encodeURIComponent(id)}`);
     if (res.status === 404) return null;
     return handleJSON<GameSession>(res);
   },

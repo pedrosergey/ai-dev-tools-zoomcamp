@@ -101,9 +101,9 @@ def _init_sample_data():
         db.close()
 
 
-app.include_router(auth.router)
-app.include_router(leaderboard.router)
-app.include_router(sessions.router)
+app.include_router(auth.router, prefix="/api")
+app.include_router(leaderboard.router, prefix="/api")
+app.include_router(sessions.router, prefix="/api")
 
 # Serve static files (frontend build) as fallback
 # This should be LAST so API routes take precedence
