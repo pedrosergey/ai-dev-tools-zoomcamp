@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { GameState, GameMode } from '@/types/game';
+import { useModal } from '@/contexts/ModalContext';
 import {
   createInitialState,
   moveSnake,
@@ -22,6 +23,7 @@ export function GameBoard({ mode, onGameOver, isSpectating = false, spectatorSta
   const gameStateRef = useRef(gameState);
   const animationFrameRef = useRef<number>();
   const lastMoveTimeRef = useRef<number>(0);
+  const { isModalOpen } = useModal();
 
   // Use spectator state if provided
   const displayState = isSpectating && spectatorState ? spectatorState : gameState;
@@ -41,7 +43,7 @@ export function GameBoard({ mode, onGameOver, isSpectating = false, spectatorSta
 
   // Keyboard controls
   useEffect(() => {
-    if (isSpectating) return;
+    if (isSpectating || isModalOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
@@ -70,7 +72,7 @@ export function GameBoard({ mode, onGameOver, isSpectating = false, spectatorSta
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mode, isSpectating]);
+  }, [mode, isSpectating, isModalOpen]);
 
   // Game loop
   useEffect(() => {

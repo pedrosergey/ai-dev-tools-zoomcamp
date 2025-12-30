@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useModal } from '@/contexts/ModalContext';
 import { Button } from '@/components/ui/button';
 import { AuthModal } from './AuthModal';
 import { User, LogOut, Trophy, Eye } from 'lucide-react';
@@ -20,17 +21,17 @@ interface HeaderProps {
 
 export function Header({ onShowLeaderboard, onShowSpectator, onGoHome, isWatchingGame }: HeaderProps) {
   const { user, logout, isLoading } = useAuth();
-  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { isModalOpen, openModal, closeModal } = useModal();
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   const openLogin = () => {
     setAuthMode('login');
-    setAuthModalOpen(true);
+    openModal();
   };
 
   const openSignup = () => {
     setAuthMode('signup');
-    setAuthModalOpen(true);
+    openModal();
   };
 
   return (
@@ -110,8 +111,8 @@ export function Header({ onShowLeaderboard, onShowSpectator, onGoHome, isWatchin
       </header>
 
       <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        isOpen={isModalOpen}
+        onClose={closeModal}
         initialMode={authMode}
       />
     </>
