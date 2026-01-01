@@ -8,7 +8,7 @@ services:
     type: web
     env: docker
     autoDeploy: true
-    dockerfilePath: ./snake-game-perro/backend/Dockerfile.render
+    dockerfilePath: ./snake-game-perro/backend/Dockerfile
     dockerContext: .
     envVars:
       - key: DATABASE_URL

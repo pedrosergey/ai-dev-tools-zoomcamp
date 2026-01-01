@@ -11,14 +11,14 @@ RUN apt-get update && apt-get install -y \
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
-# Copy project files
-COPY pyproject.toml uv.lock* ./
+# Copy project files from subdirectory
+COPY snake-game-perro/backend/pyproject.toml snake-game-perro/backend/uv.lock* ./
 
 # Install dependencies
 RUN uv sync --frozen
 
 # Copy application code
-COPY . .
+COPY snake-game-perro/backend/ .
 
 # Expose port
 EXPOSE 8000
