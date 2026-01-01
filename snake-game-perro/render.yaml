@@ -2,13 +2,11 @@ databases:
   - name: snake-game-db
     databaseName: snake_arena
     user: snake_user
-    plan: free
 
 services:
   - name: snake-game-backend
     type: web
     env: docker
-    plan: starter
     autoDeploy: true
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
@@ -24,7 +22,6 @@ services:
   - name: snake-game-frontend
     type: web
     env: static
-    plan: starter
     buildCommand: npm install && npm run build
     staticPublishPath: frontend/dist
     envVars:
