@@ -2,7 +2,6 @@ databases:
   - name: snake-game-db
     databaseName: snake_arena
     user: snake_user
-    plan: free
 
 services:
   - name: snake-game-backend
