@@ -8,7 +8,6 @@ services:
   - name: snake-game-backend
     type: web
     env: docker
-    plan: starter
     autoDeploy: true
     rootDir: snake-game-perro/backend
     dockerfilePath: Dockerfile
@@ -25,7 +24,6 @@ services:
   - name: snake-game-frontend
     type: web
     env: static
-    plan: starter
     rootDir: snake-game-perro/frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
