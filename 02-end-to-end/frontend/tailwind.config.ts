@@ -101,6 +101,5 @@ export default {
       },
     },
   },
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate")], // eslint-disable-line @typescript-eslint/no-require-imports
 } satisfies Config;
